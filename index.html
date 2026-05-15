@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2 English Master Quiz - Set 3</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --success: #22c55e;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: #1e293b; line-height: 1.6; padding: 20px; }
+        .container { max-width: 850px; margin: 0 auto; }
+        
+        /* Welcome Screen */
+        #welcome-screen { text-align: center; background: white; padding: 50px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        input[type="text"] { padding: 12px; width: 250px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; margin-bottom: 20px; }
+        
+        /* Quiz Layout */
+        #quiz-container { display: none; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        #progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.4s; }
+
+        .leaflet-card { background: var(--card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid var(--primary); }
+        .leaflet-text { font-size: 1.1rem; background: #f1f5f9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid var(--primary); }
+        .leaflet-text strong { color: var(--primary); font-weight: 700; }
+
+        .question-box { margin-bottom: 20px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .question-title { font-weight: 700; margin-bottom: 10px; display: block; color: #475569; font-size: 0.9rem; }
+        
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .opt-btn { padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; cursor: pointer; transition: 0.2s; text-align: left; }
+        .opt-btn:hover:not(:disabled) { border-color: var(--primary); background: #f5f3ff; }
+        
+        .correct { background: var(--success) !important; color: white; border-color: var(--success) !important; }
+        .incorrect { background: var(--error) !important; color: white; border-color: var(--error) !important; }
+        
+        .explanation { margin-top: 8px; font-size: 0.85rem; display: none; padding: 8px; background: #f0fdf4; border-radius: 4px; color: #166534; }
+        
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+        button.main-btn { padding: 12px 30px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: var(--primary); color: white; transition: 0.2s; }
+        button:disabled { opacity: 0.5; }
+
+        /* Result Screen */
+        #final-score { display: none; text-align: center; padding: 50px; background: white; border-radius: 15px; }
+        .rank-gold { color: #d4af37; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Screen 1: Welcome -->
+    <div id="welcome-screen">
+        <h1>B2 English Master Quiz</h1>
+        <p>Please enter your name to start the challenge</p>
+        <input type="text" id="student-name" placeholder="Your Full Name..." autofocus>
+        <br>
+        <button class="main-btn" onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <!-- Screen 2: Quiz -->
+    <div id="quiz-container">
+        <div class="header">
+            <h2 id="display-name"></h2>
+            <div class="progress-bar"><div id="progress-fill"></div></div>
+        </div>
+
+        <div id="quiz-wrapper"></div>
+
+        <div class="nav-buttons">
+            <button id="prevBtn" class="main-btn" style="background: #64748b;" onclick="changeLeaflet(-1)" disabled>Previous</button>
+            <button id="nextBtn" class="main-btn" onclick="changeLeaflet(1)">Next Leaflet</button>
+        </div>
+    </div>
+
+    <!-- Screen 3: Result -->
+    <div id="final-score">
+        <h2 id="result-header"></h2>
+        <p style="font-size: 1.2rem;">Your Total Score:</p>
+        <div id="score-text" style="font-size: 3.5rem; font-weight: 900; margin: 20px 0;"></div>
+        <div id="rank-message" style="margin-bottom: 30px; font-style: italic;"></div>
+        <button class="main-btn" onclick="location.reload()">Restart Quiz</button>
+    </div>
+</div>
+
+<script>
+const quizData = [
+    {
+        topic: "1. Modern Art Gallery",
+        text: "Experience creativity without boundaries. Our gallery offers <strong>(1) a/an __________</strong> environment for art lovers. Explore our <strong>(2) __________</strong> installations. The sculptures, <strong>(3) __________</strong> from recycled plastics, challenge our view of waste. We encourage you to <strong>(4) __________</strong> about the artist's message. Admire the <strong>(5) __________</strong> brushwork of the painters and don't forget to <strong>(6) __________</strong> the guestbook!",
+        questions: [
+            { id: 1, type: "Vocabulary", opts: ["stimulating", "bland", "cluttered", "stale"], ans: 0, why: "Stimulating (Kích thích tư duy) phù hợp với triển lãm nghệ thuật." },
+            { id: 2, type: "Word Order", opts: ["vivid digital abstract", "digital vivid abstract", "abstract vivid digital", "vivid abstract digital"], ans: 0, why: "Vivid (Tính chất) + Digital (Phương thức) + Abstract (Loại hình)." },
+            { id: 3, type: "Reduced Relative", opts: ["fashioning", "fashioned", "which fashioned", "were fashioned"], ans: 1, why: "Cấu trúc bị động: sculptures (which were) fashioned." },
+            { id: 4, type: "Collocation (Have)", opts: ["do a think", "make a thought", "have a think", "do a meditation"], ans: 2, why: "Have a think about (Suy nghĩ về điều gì đó)." },
+            { id: 5, type: "Word Form", opts: ["express", "expression", "expressive", "expressively"], ans: 2, why: "Expressive (Đầy biểu cảm) là tính từ bổ nghĩa cho brushwork." },
+            { id: 6, type: "Phrasal Verb", opts: ["sign in", "get across", "put up", "fill out"], ans: 0, why: "Sign in (Ký tên vào) sổ khách mời." }
+        ]
+    },
+    {
+        topic: "2. Jungle Trekking Tours",
+        text: "Are you ready to face the wild? We provide <strong>(7) a/an __________</strong> journey through the Amazon. The tour includes <strong>(8) __________</strong> paths. The trails, <strong>(9) __________</strong> by expert guides, ensure you see the best spots safely. Please <strong>(10) __________</strong> that you follow all instructions. View the <strong>(11) __________</strong> wildlife and remember to <strong>(12) __________</strong> for snakes!",
+        questions: [
+            { id: 7, type: "Vocabulary", opts: ["authentic", "artificial", "fictional", "counterfeit"], ans: 0, why: "Authentic (Đích thực) thường dùng cho tour trải nghiệm thực tế." },
+            { id: 8, type: "Word Order", opts: ["hidden forest dirt", "forest hidden dirt", "dirt hidden forest", "hidden dirt forest"], ans: 0, why: "Hidden (Tính chất) + Forest (Địa điểm) + Dirt (Loại đường)." },
+            { id: 9, type: "Reduced Relative", opts: ["identifying", "identified", "which identified", "were identified"], ans: 1, why: "Các con đường 'được xác định' bởi hướng dẫn viên." },
+            { id: 10, type: "Collocation (Make)", opts: ["do sure", "make sure", "have sure", "do certain"], ans: 1, why: "Make sure (Đảm bảo rằng) là collocation phổ biến." },
+            { id: 11, type: "Word Form", opts: ["exotic", "exoticism", "exotically", "exoticize"], ans: 0, why: "Exotic (Kỳ lạ/Độc đáo) là tính từ bổ nghĩa cho wildlife." },
+            { id: 12, type: "Phrasal Verb", opts: ["look out", "take after", "go off", "run into"], ans: 0, why: "Look out for (Cảnh giác/Cẩn thận) vật nguy hiểm." }
+        ]
+    },
+    {
+        topic: "3. City Volunteer Day",
+        text: "Make a difference in your community! This is <strong>(13) a/an __________</strong> chance to help the elderly. We have several <strong>(14) __________</strong> teams. The tasks, <strong>(15) __________</strong> among volunteers, range from gardening to painting. We invite you to <strong>(16) __________</strong> for the environment today. Witness the <strong>(17) __________</strong> impact of your work and remember to <strong>(18) __________</strong> at the town hall!",
+        questions: [
+            { id: 13, type: "Vocabulary", opts: ["valuable", "worthless", "trivial", "minor"], ans: 0, why: "Valuable (Giá trị/Quý báu) phù hợp với hoạt động tình nguyện." },
+            { id: 14, type: "Word Order", opts: ["energetic local youth", "local energetic youth", "youth local energetic", "energetic youth local"], ans: 0, why: "Energetic (Tính chất) + Local (Địa phương) + Youth (Đối tượng)." },
+            { id: 15, type: "Reduced Relative", opts: ["dividing", "divided", "which divided", "were divided"], ans: 1, why: "Nhiệm vụ 'được phân chia' (passive)." },
+            { id: 16, type: "Collocation (Do)", opts: ["do good", "make good", "have good", "do an effort"], ans: 0, why: "Do good (Làm việc tốt/Làm điều thiện)." },
+            { id: 17, type: "Word Form", opts: ["benefit", "beneficial", "beneficially", "beneficiary"], ans: 1, why: "Beneficial (Có lợi) là tính từ bổ nghĩa cho impact." },
+            { id: 18, type: "Phrasal Verb", opts: ["show up", "give in", "look up", "take back"], ans: 0, why: "Show up (Có mặt/Xuất hiện)." }
+        ]
+    },
+    {
+        topic: "4. Digital Skills Workshop",
+        text: "Upgrade your career in just one day! We offer <strong>(19) a/an __________</strong> curriculum for beginners. Our lab features <strong>(20) __________</strong> computers. The software, <strong>(21) __________</strong> by top developers, is easy to master. Our mentors will <strong>(22) __________</strong> to help you succeed. Learn <strong>(23) __________</strong> techniques and make sure to <strong>(24) __________</strong> your computer before leaving!",
+        questions: [
+            { id: 19, type: "Vocabulary", opts: ["comprehensive", "shallow", "vague", "narrow"], ans: 0, why: "Comprehensive (Toàn diện) mô tả chương trình học đầy đủ." },
+            { id: 20, type: "Word Order", opts: ["powerful silver laptop", "silver powerful laptop", "laptop powerful silver", "powerful laptop silver"], ans: 0, why: "Powerful (Tính chất) + Silver (Màu sắc) + Laptop (Danh từ phụ)." },
+            { id: 21, type: "Reduced Relative", opts: ["recommending", "recommended", "which recommended", "were recommended"], ans: 1, why: "Phần mềm 'được khuyên dùng'." },
+            { id: 22, type: "Collocation (Do)", opts: ["make their best", "have their best", "do their best", "do an attempt"], ans: 2, why: "Do one's best (Cố gắng hết sức)." },
+            { id: 23, type: "Word Form", opts: ["analysis", "analyze", "analytical", "analytically"], ans: 2, why: "Analytical (Mang tính phân tích) là tính từ." },
+            { id: 24, type: "Phrasal Verb", opts: ["shut down", "turn on", "put away", "log in"], ans: 0, why: "Shut down (Tắt máy)." }
+        ]
+    },
+    {
+        topic: "5. Weekend Book Club",
+        text: "Join our community of readers! We provide <strong>(25) a/an __________</strong> space for literary discussion. Our library has <strong>(26) __________</strong> shelves. The books, <strong>(27) __________</strong> by our members, cover many genres. You will <strong>(28) __________</strong> with our monthly guests. Enjoy the <strong>(29) __________</strong> atmosphere and don't forget to <strong>(30) __________</strong> your borrowed books!",
+        questions: [
+            { id: 25, type: "Vocabulary", opts: ["cosy", "hostile", "noisy", "vast"], ans: 0, why: "Cosy (Ấm cúng) phù hợp với CLB sách." },
+            { id: 26, type: "Word Order", opts: ["tall wooden oak", "wooden tall oak", "oak tall wooden", "tall oak wooden"], ans: 0, why: "Tall (Kích cỡ) + Wooden (Chất liệu) + Oak (Loại gỗ)." },
+            { id: 27, type: "Reduced Relative", opts: ["selecting", "selected", "which selected", "were selected"], ans: 1, why: "Sách 'được lựa chọn'." },
+            { id: 28, type: "Collocation (Have)", opts: ["do a chat", "make a chat", "have a chat", "do a talk"], ans: 2, why: "Have a chat (Trò chuyện)." },
+            { id: 29, type: "Word Form", opts: ["peace", "peaceful", "peacefully", "pacify"], ans: 1, why: "Peaceful (Yên tĩnh) là tính từ." },
+            { id: 30, type: "Phrasal Verb", opts: ["bring back", "take after", "get over", "give up"], ans: 0, why: "Bring back (Trả lại) sách." }
+        ]
+    }
+];
+
+let studentName = "";
+let currentLeaflet = 0;
+let userScore = 0;
+const answeredQuestions = new Set();
+
+function startQuiz() {
+    const nameInput = document.getElementById('student-name').value;
+    if (nameInput.trim() === "") {
+        alert("Please enter your name!");
+        return;
+    }
+    studentName = nameInput;
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('quiz-container').style.display = 'block';
+    document.getElementById('display-name').innerText = "Student: " + studentName;
+    renderLeaflet();
+}
+
+function renderLeaflet() {
+    const data = quizData[currentLeaflet];
+    const wrapper = document.getElementById('quiz-wrapper');
+    
+    let html = `
+        <div class="leaflet-card">
+            <h3>${data.topic}</h3>
+            <div class="leaflet-text">${data.text}</div>
+            <div id="questions-container">
+                ${data.questions.map((q, idx) => `
+                    <div class="question-box">
+                        <span class="question-title">Q${q.id} [${q.type}]</span>
+                        <div class="options-grid">
+                            ${q.opts.map((opt, oIdx) => `
+                                <button class="opt-btn" onclick="checkAnswer(this, ${currentLeaflet}, ${idx}, ${oIdx})">${opt}</button>
+                            `).join('')}
+                        </div>
+                        <div class="explanation" id="exp-${currentLeaflet}-${idx}">${q.why}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    wrapper.innerHTML = html;
+    updateProgress();
+    document.getElementById('prevBtn').disabled = currentLeaflet === 0;
+    document.getElementById('nextBtn').innerText = currentLeaflet === quizData.length - 1 ? "Finish Quiz" : "Next Leaflet";
+}
+
+function checkAnswer(btn, lIdx, qIdx, selected) {
+    if (answeredQuestions.has(`${lIdx}-${qIdx}`)) return;
+    
+    const question = quizData[lIdx].questions[qIdx];
+    const parent = btn.parentElement;
+    const buttons = parent.querySelectorAll('.opt-btn');
+    const exp = document.getElementById(`exp-${lIdx}-${qIdx}`);
+    
+    buttons.forEach(b => b.disabled = true);
+    answeredQuestions.add(`${lIdx}-${qIdx}`);
+
+    if (selected === question.ans) {
+        btn.classList.add('correct');
+        userScore++;
+    } else {
+        btn.classList.add('incorrect');
+        buttons[question.ans].classList.add('correct');
+    }
+    exp.style.display = 'block';
+    updateProgress();
+}
+
+function updateProgress() {
+    const total = 30;
+    const current = answeredQuestions.size;
+    document.getElementById('progress-fill').style.width = `${(current / total) * 100}%`;
+}
+
+function changeLeaflet(step) {
+    if (step === 1 && currentLeaflet === quizData.length - 1) {
+        showFinalResult();
+        return;
+    }
+    currentLeaflet += step;
+    renderLeaflet();
+    window.scrollTo(0,0);
+}
+
+function showFinalResult() {
+    document.getElementById('quiz-container').style.display = 'none';
+    const final = document.getElementById('final-score');
+    final.style.display = 'block';
+    
+    document.getElementById('result-header').innerText = "Congratulations, " + studentName + "!";
+    document.getElementById('score-text').innerText = userScore + " / 30";
+    
+    let msg = "";
+    if (userScore >= 27) msg = "🏆 Outstanding! You are a B2 Grammar Expert!";
+    else if (userScore >= 21) msg = "🌟 Great job! You have a solid grasp of B2 English.";
+    else if (userScore >= 15) msg = "👍 Good effort, but some areas need more practice.";
+    else msg = "📚 Keep studying! Review the explanations to improve.";
+    
+    document.getElementById('rank-message').innerText = msg;
+}
+</script>
+
+</body>
+</html>
